@@ -9,8 +9,8 @@
 **********************************************************************/
 
 import { Port } from './port';
-import { Command } from './command';
 import { IpConverter } from './ip-converter';
+import { readFile } from 'fs';
 
 /**
  * Allow to grab ports being opened and on which network interface
@@ -18,8 +18,23 @@ import { IpConverter } from './ip-converter';
  */
 export class PortScanner {
 
-    public static readonly GRAB_PORTS_IPV4 = 'cat /proc/net/tcp';
-    public static readonly GRAB_PORTS_IPV6 = 'cat /proc/net/tcp6';
+    public static readonly PORTS_IPV4 = '/proc/net/tcp';
+    public static readonly PORTS_IPV6 = '/proc/net/tcp6';
+
+    private fetchTCP4 = true;
+    private fetchTCP6 = true;
+
+    public readFilePromise(path: string): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            readFile(path, (err: NodeJS.ErrnoException, data: Buffer) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.toString());
+                }
+            });
+        });
+    }
 
     /**
      * Get opened ports.
@@ -27,10 +42,18 @@ export class PortScanner {
     public async getListeningPorts(): Promise<Port[]> {
 
         const ipConverter = new IpConverter();
-        // connect to /proc/net/tcp and /proc/net/tcp6
-        const command = new Command(__dirname);
-        const outputv4 = await command.exec(PortScanner.GRAB_PORTS_IPV4);
-        const outputv6 = await command.exec(PortScanner.GRAB_PORTS_IPV6);
+        const outputv4 = this.fetchTCP4 ?
+            this.readFilePromise(PortScanner.PORTS_IPV4)
+                .catch(e => {
+                    console.error(e);
+                    this.fetchTCP4 = false;
+                }) : '';
+        const outputv6 = this.fetchTCP6 ?
+            this.readFilePromise(PortScanner.PORTS_IPV6)
+                .catch(e => {
+                    console.error(e);
+                    this.fetchTCP6 = false;
+                }) : '';
 
         // assembe ipv4 and ipv6 output
         const output = `
