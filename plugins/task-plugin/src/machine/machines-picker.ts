@@ -31,6 +31,9 @@ export class MachinesPicker {
      */
     async pick(): Promise<string> {
 
+        console.log('isOpen: ' + this.isOpen);
+        console.log('hideToolContainers: ' + this.hideToolContainers);
+
         if (this.isOpen) {
             // trigger show/hide tool containers
             this.hideToolContainers = !this.hideToolContainers;
@@ -39,7 +42,12 @@ export class MachinesPicker {
             this.hideToolContainers = true;
         }
 
+        console.log('isOpen after: ' + this.isOpen);
+        console.log('hideToolContainers after: ' + this.hideToolContainers);
+
         const machines = await this.getMachines(this.hideToolContainers);
+        console.log('machines length: ' + machines.length);
+        console.log('machines: ' + machines);
         if (machines.length === 1) {
             return Promise.resolve(machines[0]);
         }
@@ -49,17 +57,21 @@ export class MachinesPicker {
             items.push(machineName);
         }
 
+        console.log('constructed items: ' + items);
+
         return this.showMachineQuickPick(items);
     }
 
     protected async getMachines(hideToolContainers: boolean): Promise<string[]> {
         const machineNames: string[] = [];
         const machines = await this.cheWorkspaceClient.getMachines();
+        console.log('machines from client: ' + machines);
         if (!machines) {
             return machineNames;
         }
 
         for (const machineName in machines) {
+            console.log('process: ' + machineName);
             if (!machines.hasOwnProperty(machineName)) {
                 continue;
             }
@@ -70,6 +82,8 @@ export class MachinesPicker {
                     continue;
                 }
             }
+
+            console.log('add into machines names: ' + machineName);
 
             machineNames.push(machineName);
         }
