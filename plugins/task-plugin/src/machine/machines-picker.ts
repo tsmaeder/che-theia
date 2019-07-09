@@ -71,10 +71,10 @@ export class MachinesPicker {
         }
 
         for (const machineName in machines) {
-            console.log('process: ' + machineName);
             if (!machines.hasOwnProperty(machineName)) {
                 continue;
             }
+            console.log('process: ' + machineName);
 
             if (hideToolContainers) {
                 const machine = machines[machineName];
