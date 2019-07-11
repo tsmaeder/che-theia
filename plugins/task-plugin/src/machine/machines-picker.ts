@@ -24,7 +24,7 @@ export class MachinesPicker {
     protected readonly cheWorkspaceClient!: CheWorkspaceClient;
 
     async pick(): Promise<string> {
-        return this.doPick(true);
+        return await this.doPick(true);
     }
 
     protected async doPick(hideToolingContainers: boolean): Promise<string> {
