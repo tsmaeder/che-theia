@@ -30,13 +30,13 @@ export class MachinesPicker {
     protected async doPick(hideToolingContainers: boolean): Promise<string> {
         const containers = await this.getContainers(hideToolingContainers);
 
-        if (containers.length === 0 && !hideToolingContainers) {
-            return Promise.reject(new Error('There isn\'t any container to execute a task.'));
-        }
-
-        if (containers.length === 1 && !hideToolingContainers) {
-            return Promise.resolve(containers[0]);
-        }
+        // if (containers.length === 0 && !hideToolingContainers) {
+        //     return Promise.reject(new Error('There isn\'t any container to execute a task.'));
+        // }
+        //
+        // if (containers.length === 1 && !hideToolingContainers) {
+        //     return Promise.resolve(containers[0]);
+        // }
 
         return new Promise<string>(resolve => {
 
