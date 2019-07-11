@@ -50,14 +50,14 @@ export class MachinesPicker {
             }
 
             const options = { placeHolder: MACHINES_PLACE_HOLDER } as theia.QuickPickOptions;
-            options.onDidSelectItem = (async item => {
-                if (item instanceof ContainerItem) {
-                    resolve(item.label);
-                } else if (item instanceof LoadMoreItem) {
-                    const containerName = await this.doPick(false);
-                    resolve(containerName);
-                }
-            });
+            // options.onDidSelectItem = (async item => {
+            //     if (item instanceof ContainerItem) {
+            //         resolve(item.label);
+            //     } else if (item instanceof LoadMoreItem) {
+            //         const containerName = await this.doPick(false);
+            //         resolve(containerName);
+            //     }
+            // });
             theia.window.showQuickPick(items, options);
         });
     }
