@@ -10,6 +10,7 @@
 
 import { injectable, inject } from 'inversify';
 import * as theia from '@theia/plugin';
+import * as startPoint from '../task-plugin-backend';
 import { che as cheApi } from '@eclipse-che/api';
 import { TaskConfiguration } from '@eclipse-che/plugin';
 import { resolve } from 'path';
@@ -44,11 +45,11 @@ export class TaskConfigurationsExporter implements ConfigurationsExporter {
 
         const cheTasks = this.cheTaskConfigsExtractor.extract(commands);
         const vsCodeTasks = this.vsCodeTaskConfigsExtractor.extract(commands);
-        const devfileConfigs = this.merge(cheTasks, vsCodeTasks.configs);
+        const devfileConfigs = this.merge(cheTasks, vsCodeTasks.configs, this.getOutputChannelConflictLogger());
 
         const configFileContent = configFileTasks.content;
         if (configFileContent) {
-            this.saveConfigs(tasksConfigFileUri, configFileContent, this.merge(configFileTasks.configs, devfileConfigs));
+            this.saveConfigs(tasksConfigFileUri, configFileContent, this.merge(configFileTasks.configs, devfileConfigs, this.getConsoleConflictLogger()));
             return;
         }
 
@@ -63,7 +64,10 @@ export class TaskConfigurationsExporter implements ConfigurationsExporter {
         }
     }
 
-    private merge(configurations1: TaskConfiguration[], configurations2: TaskConfiguration[]): TaskConfiguration[] {
+    private merge(configurations1: TaskConfiguration[],
+        configurations2: TaskConfiguration[],
+        conflictHandler: (config1: TaskConfiguration, config2: TaskConfiguration) => void): TaskConfiguration[] {
+
         const result: TaskConfiguration[] = Object.assign([], configurations1);
 
         for (const config2 of configurations2) {
@@ -77,7 +81,7 @@ export class TaskConfigurationsExporter implements ConfigurationsExporter {
                 continue;
             }
 
-            console.log(`Conflict at exporting task configurations: ${JSON.stringify(conflict)} and ${JSON.stringify(config2)}`);
+            conflictHandler(conflict, config2);
         }
 
         return result;
@@ -101,5 +105,21 @@ export class TaskConfigurationsExporter implements ConfigurationsExporter {
     private saveConfigs(tasksConfigFileUri: string, content: string, configurations: TaskConfiguration[]) {
         const result = modify(content, ['tasks'], configurations, formattingOptions);
         writeFileSync(tasksConfigFileUri, result);
+    }
+
+    private getOutputChannelConflictLogger(): (config1: TaskConfiguration, config2: TaskConfiguration) => void {
+        return (config1: TaskConfiguration, config2: TaskConfiguration) => {
+            const outputChannel = startPoint.getOutputChannel();
+            outputChannel.show();
+            outputChannel.appendLine(`Conflict at exporting task configurations: ${JSON.stringify(config1)} and ${JSON.stringify(config2)}`);
+            outputChannel.appendLine(`The configuration: ${JSON.stringify(config2)} is ignored`);
+        };
+    }
+
+    private getConsoleConflictLogger(): (config1: TaskConfiguration, config2: TaskConfiguration) => void {
+        return (config1: TaskConfiguration, config2: TaskConfiguration) => {
+            console.warn(`Conflict at exporting task configurations: ${JSON.stringify(config1)} and ${JSON.stringify(config2)}`,
+                `The configuration: ${JSON.stringify(config2)} is ignored`);
+        };
     }
 }

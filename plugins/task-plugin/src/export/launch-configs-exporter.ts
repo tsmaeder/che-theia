@@ -38,7 +38,7 @@ export class LaunchConfigurationsExporter implements ConfigurationsExporter {
 
         const configFileContent = configFileConfigs.content;
         if (configFileContent) {
-            this.saveConfigs(launchConfigFileUri, configFileContent, this.merge(vsCodeConfigs.configs, configFileConfigs.configs));
+            this.saveConfigs(launchConfigFileUri, configFileContent, this.merge(configFileConfigs.configs, vsCodeConfigs.configs, this.getConsoleConflictLogger()));
             return;
         }
 
@@ -48,7 +48,10 @@ export class LaunchConfigurationsExporter implements ConfigurationsExporter {
         }
     }
 
-    private merge(configurations1: theia.DebugConfiguration[], configurations2: theia.DebugConfiguration[]): theia.DebugConfiguration[] {
+    private merge(configurations1: theia.DebugConfiguration[],
+        configurations2: theia.DebugConfiguration[],
+        conflictHandler: (config1: theia.DebugConfiguration, config2: theia.DebugConfiguration) => void): theia.DebugConfiguration[] {
+
         const result: theia.DebugConfiguration[] = Object.assign([], configurations1);
 
         for (const config2 of configurations2) {
@@ -62,8 +65,7 @@ export class LaunchConfigurationsExporter implements ConfigurationsExporter {
                 continue;
             }
 
-            const newName = this.getUniqueName(config2.name, [...configurations1, ...configurations2]);
-            result.push({ ...config2, name: newName });
+            conflictHandler(conflict, config2);
         }
 
         return result;
@@ -80,18 +82,6 @@ export class LaunchConfigurationsExporter implements ConfigurationsExporter {
         return JSON.stringify(properties1) === JSON.stringify(properties2);
     }
 
-    private getUniqueName(name: string, configs: theia.DebugConfiguration[]): string {
-        let counter = 1;
-        let newName = '';
-
-        do {
-            newName = `${name}_${counter}`;
-            counter++;
-        } while (configs.some(config => config.name === newName));
-
-        return newName;
-    }
-
     private getConfigFileUri(rootDir: string): string {
         return resolve(rootDir.toString(), CONFIG_DIR, LAUNCH_CONFIG_FILE);
     }
@@ -99,5 +89,12 @@ export class LaunchConfigurationsExporter implements ConfigurationsExporter {
     private saveConfigs(launchConfigFileUri: string, content: string, configurations: theia.DebugConfiguration[]) {
         const result = modify(content, ['configurations'], configurations, formattingOptions);
         writeFileSync(launchConfigFileUri, result);
+    }
+
+    private getConsoleConflictLogger(): (config1: theia.DebugConfiguration, config2: theia.DebugConfiguration) => void {
+        return (config1: theia.DebugConfiguration, config2: theia.DebugConfiguration) => {
+            console.warn(`Conflict at exporting launch configurations: ${JSON.stringify(config1)} and ${JSON.stringify(config2)}`,
+                `The configuration: ${JSON.stringify(config2)} is ignored`);
+        };
     }
 }
