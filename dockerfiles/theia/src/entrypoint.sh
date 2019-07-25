@@ -76,8 +76,8 @@ if [ "${NOCDN}" == "true" ]; then
 fi
 shopt -u nocasematch
 
-# run Che Theia
-node src-gen/backend/main.js /projects --hostname=0.0.0.0 --port=${THEIA_PORT} &
+# run che
+node src-gen/backend/main.js /home/theia/.theia/projects.theia-workspace --hostname=0.0.0.0 --port=${THEIA_PORT} &
 
 PID=$!
 

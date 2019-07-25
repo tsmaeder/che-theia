@@ -41,11 +41,6 @@ abstract class WorkspaceProjectsManager {
     abstract deleteProject(workspace: cheApi.workspace.Workspace, projectFolderURI: string): void;
 
     async run(workspace?: cheApi.workspace.Workspace) {
-        if (!theia.workspace.name) {
-            // no workspace opened, so nothing to clone / watch
-            return;
-        }
-
         if (!workspace) {
             workspace = await che.workspace.getCurrentWorkspace();
         }
@@ -61,10 +56,17 @@ abstract class WorkspaceProjectsManager {
         }
 
         theia.window.showInformationMessage('Che Workspace: Starting importing projects.');
+        const workspaceFolders: theia.Uri[] = [];
         await Promise.all(
-            cloneCommandList.map(cloneCommand => cloneCommand.execute())
+            cloneCommandList.map(cloneCommand => {
+                if (!cloneCommand.isInTheiaWorkspace()) {
+                    workspaceFolders.push(theia.Uri.file(cloneCommand.folder));
+                }
+                return cloneCommand.clone();
+            })
         );
         theia.window.showInformationMessage('Che Workspace: Finished importing projects.');
+        await theia.commands.executeCommand('che.workspace.addFolder', workspaceFolders);
     }
 
     async startSyncWorkspaceProjects() {

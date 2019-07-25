@@ -16,6 +16,7 @@ import { che as cheApi } from '@eclipse-che/api';
 import * as fileuri from './file-uri';
 import { execute } from './exec';
 import * as git from './git';
+import * as fs from 'fs';
 
 const CHE_TASK_TYPE = 'che';
 
@@ -122,6 +123,9 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
 
     // Clones git repository
     private async gitClone(progress: theia.Progress<{ message?: string; increment?: number }>, token: theia.CancellationToken): Promise<void> {
+        if (!this.locationURI) {
+            return new Promise(() => { });
+        }
         const args: string[] = ['clone', this.locationURI, this.projectPath];
         if (this.checkoutBranch) {
             args.push('--branch');
@@ -227,6 +231,17 @@ export class TheiaImportZipCommand implements TheiaImportCommand {
             location: theia.ProgressLocation.Notification,
             title: `Importing ${this.locationURI} ...`
         }, (progress, token) => importZip(progress, token));
+    }
+    
+    isInTheiaWorkspace(): boolean {
+        for (let i = 0; i < theia.workspace.workspaceFolders.length; i++) {
+            const wsFolder = theia.workspace.workspaceFolders[i];
+
+            if (wsFolder && fs.realpathSync(wsFolder.uri.fsPath) === fs.realpathSync(this._folder)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

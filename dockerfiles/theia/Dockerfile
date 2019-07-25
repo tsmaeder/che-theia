@@ -153,6 +153,8 @@ COPY --from=builder /home/theia-dev/theia-source-code/production/plugins /defaul
     && find ${HOME} -exec sh -c "chgrp 0 {}; chmod g+rwX {}" \;
 
 COPY --chown=theia:root --from=builder /home/theia-dev/theia-source-code/production /home/theia
+RUN mkdir -p ${HOME}/.theia && chmod -R 777 ${HOME}/.theia
+COPY ["./projects.theia-workspace", "/home/theia/.theia"]
 USER theia
 WORKDIR /projects
 COPY src/entrypoint.sh /entrypoint.sh

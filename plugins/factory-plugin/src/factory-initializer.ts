@@ -92,9 +92,16 @@ export class FactoryInitializer {
             return;
         }
 
+        const workspaceFolders: theia.Uri[] = [];
         await Promise.all(
-            cloneCommands.map(command => command.execute())
+            cloneCommands.map(cloneCommand => {
+                if (cloneCommand.isInTheiaWorkspace()) {
+                    workspaceFolders.push(theia.Uri.file(cloneCommand.folder));
+                }
+                cloneCommand.clone();
+            })
         );
+        await theia.commands.executeCommand('che.workspace.addFolder', workspaceFolders);
 
         theia.window.showInformationMessage('Che Factory: Finished cloning projects.');
     }
