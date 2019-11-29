@@ -10,7 +10,7 @@
 import * as theia from '@theia/plugin';
 import * as che from '@eclipse-che/plugin';
 import { che as cheApi } from '@eclipse-che/api';
-import { buildProjectImportCommand, TheiaImportCommand, TheiaCommand } from './theia-commands';
+import { buildProjectImportCommand, TheiaImportCommand, TheiaCommand, isInTheiaWorkspace } from './theia-commands';
 
 export enum ActionId {
     OPEN_FILE = 'openFile',
@@ -95,10 +95,10 @@ export class FactoryInitializer {
         const workspaceFolders: theia.Uri[] = [];
         await Promise.all(
             cloneCommands.map(cloneCommand => {
-                if (cloneCommand.isInTheiaWorkspace()) {
-                    workspaceFolders.push(theia.Uri.file(cloneCommand.folder));
+                if (isInTheiaWorkspace(cloneCommand.projectDir)) {
+                    workspaceFolders.push(theia.Uri.file(cloneCommand.projectDir));
                 }
-                cloneCommand.clone();
+                cloneCommand.execute();
             })
         );
         await theia.commands.executeCommand('che.workspace.addFolder', workspaceFolders);

@@ -9,7 +9,7 @@
  **********************************************************************/
 
 import * as path from 'path';
-import * as fs from 'fs-extra';
+import * as fsextra from 'fs-extra';
 import * as os from 'os';
 import * as theia from '@theia/plugin';
 import { che as cheApi } from '@eclipse-che/api';
@@ -34,6 +34,7 @@ function isDevfileProjectConfig(project: cheApi.workspace.ProjectConfig | cheApi
 
 export interface TheiaImportCommand {
     execute(): PromiseLike<void>;
+    readonly projectDir: string;
 }
 
 export function buildProjectImportCommand(
@@ -62,7 +63,7 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
 
     private projectName: string | undefined;
     private locationURI: string;
-    private projectPath: string;
+    readonly projectDir: string;
     private checkoutBranch?: string | undefined;
     private checkoutTag?: string | undefined;
     private checkoutStartPoint?: string | undefined;
@@ -79,7 +80,7 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
 
             this.projectName = project.name;
             this.locationURI = source.location;
-            this.projectPath = project.clonePath ? path.join(projectsRoot, project.clonePath) : path.join(projectsRoot, project.name!);
+            this.projectDir = project.clonePath ? path.join(projectsRoot, project.clonePath) : path.join(projectsRoot, project.name!);
             this.checkoutBranch = source.branch;
             this.checkoutStartPoint = source.startPoint;
             this.checkoutTag = source.tag;
@@ -94,7 +95,7 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
 
             this.projectName = project.name;
             this.locationURI = project.source.location!;
-            this.projectPath = projectsRoot + project.path;
+            this.projectDir = projectsRoot + project.path;
             this.checkoutBranch = parameters['branch'];
             this.checkoutStartPoint = parameters['startPoint'];
             this.checkoutTag = project.source.parameters['tag'];
@@ -126,7 +127,7 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
         if (!this.locationURI) {
             return new Promise(() => { });
         }
-        const args: string[] = ['clone', this.locationURI, this.projectPath];
+        const args: string[] = ['clone', this.locationURI, this.projectDir];
         if (this.checkoutBranch) {
             args.push('--branch');
             args.push(this.checkoutBranch);
@@ -142,15 +143,15 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
                 : (this.checkoutTag ? this.checkoutTag : this.checkoutCommitId);
 
             const branch = this.checkoutBranch ? this.checkoutBranch : 'default branch';
-            const messageStart = `Project ${this.locationURI} cloned to ${this.projectPath} and checked out ${branch}`;
+            const messageStart = `Project ${this.locationURI} cloned to ${this.projectDir} and checked out ${branch}`;
 
             if (treeish) {
-                git.execGit(this.projectPath, 'reset', '--hard', treeish)
+                git.execGit(this.projectDir, 'reset', '--hard', treeish)
                     .then(_ => {
                         theia.window.showInformationMessage(`${messageStart} which has been reset to ${treeish}.`);
                     }, e => {
                         theia.window.showErrorMessage(`${messageStart} but resetting to ${treeish} failed with ${e.message}.`);
-                        console.log(`Couldn't reset to ${treeish} of ${this.projectPath} cloned from ${this.locationURI} and checked out to ${branch}.`, e);
+                        console.log(`Couldn't reset to ${treeish} of ${this.projectDir} cloned from ${this.locationURI} and checked out to ${branch}.`, e);
                     });
             } else {
                 theia.window.showInformationMessage(`${messageStart}.`);
@@ -171,11 +172,11 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
             this.checkoutTag ? this.checkoutTag :
                 this.checkoutCommitId ? this.checkoutCommitId :
                     this.checkoutBranch ? this.checkoutBranch : 'master';
-        await fs.ensureDir(this.projectPath);
+        await fsextra.ensureDir(this.projectDir);
 
-        await git.sparseCheckout(this.projectPath, this.locationURI, this.sparseCheckoutDir, commitReference);
+        await git.sparseCheckout(this.projectDir, this.locationURI, this.sparseCheckoutDir, commitReference);
 
-        theia.window.showInformationMessage(`Sources by template ${this.sparseCheckoutDir} of ${this.locationURI} was cloned to ${this.projectPath}.`);
+        theia.window.showInformationMessage(`Sources by template ${this.sparseCheckoutDir} of ${this.locationURI} was cloned to ${this.projectDir}.`);
     }
 
 }
@@ -183,7 +184,7 @@ export class TheiaGitCloneCommand implements TheiaImportCommand {
 export class TheiaImportZipCommand implements TheiaImportCommand {
 
     private locationURI: string | undefined;
-    private projectDir: string;
+    readonly projectDir: string;
     private tmpDir: string;
     private zipfile: string;
     private zipfilePath: string;
@@ -232,18 +233,17 @@ export class TheiaImportZipCommand implements TheiaImportCommand {
             title: `Importing ${this.locationURI} ...`
         }, (progress, token) => importZip(progress, token));
     }
-    
-    isInTheiaWorkspace(): boolean {
-        for (let i = 0; i < theia.workspace.workspaceFolders.length; i++) {
-            const wsFolder = theia.workspace.workspaceFolders[i];
+}
 
-            if (wsFolder && fs.realpathSync(wsFolder.uri.fsPath) === fs.realpathSync(this._folder)) {
-                return true;
-            }
+export function isInTheiaWorkspace(projectDir: string): boolean {
+    for (let i = 0; i < theia.workspace.workspaceFolders!.length; i++) {
+        const wsFolder = theia.workspace.workspaceFolders![i];
+
+        if (wsFolder && fs.realpathSync(wsFolder.uri.fsPath) === fs.realpathSync(projectDir)) {
+            return true;
         }
-        return false;
     }
-
+    return false;
 }
 
 export class TheiaCommand {

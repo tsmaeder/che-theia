@@ -10,7 +10,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs';
-import { TheiaImportCommand, buildProjectImportCommand } from './theia-commands';
+import { TheiaImportCommand, buildProjectImportCommand, isInTheiaWorkspace } from './theia-commands';
 import * as git from './git';
 import * as projectsHelper from './projects';
 import * as fileUri from './file-uri';
@@ -59,10 +59,10 @@ abstract class WorkspaceProjectsManager {
         const workspaceFolders: theia.Uri[] = [];
         await Promise.all(
             cloneCommandList.map(cloneCommand => {
-                if (!cloneCommand.isInTheiaWorkspace()) {
-                    workspaceFolders.push(theia.Uri.file(cloneCommand.folder));
+                if (!isInTheiaWorkspace(cloneCommand.projectDir)) {
+                    workspaceFolders.push(theia.Uri.file(cloneCommand.projectDir));
                 }
-                return cloneCommand.clone();
+                return cloneCommand.execute();
             })
         );
         theia.window.showInformationMessage('Che Workspace: Finished importing projects.');
