@@ -35,12 +35,17 @@ import { PluginReaderExtension } from './plugin-reader-extension';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { DocumentContainerAware } from './document-container-aware';
 import { LanguagesContainerAware } from './languages-container-aware';
+import { FileSystemExtImpl } from '@theia/plugin-ext/lib/plugin/file-system';
+
 import { PluginManagerExtImpl } from '@theia/plugin-ext/lib/plugin/plugin-manager';
 import { ExecuteCommandContainerAware } from './execute-command-container-aware';
 import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
 import { EnvVariablesServerImpl } from '@theia/core/lib/node/env-variables';
 import { PluginRemoteNodeImpl } from './plugin-remote-node-impl';
 import { MAIN_REMOTE_RPC_CONTEXT } from '../common/plugin-remote-rpc';
+import { overrideUri } from './che-content-aware-utils';
+import { URI } from 'vscode-uri';
+import { SidecarFilesystemProvider } from './sidecar-filesystem-provider';
 
 interface CheckAliveWS extends ws {
     alive: boolean;
@@ -249,6 +254,13 @@ to pick-up automatically a free port`));
         const outputChannel = outputChannelRegistryExt.createOutputChannel(channelName, pluginInfo);
         const outputChannelLogCallback = new OutputChannelLogCallback(outputChannel);
         this.remoteTraceLogger.addCallback(webSocketClient, outputChannelLogCallback);
+
+
+        const machineName = process.env.CHE_MACHINE_NAME;
+        if (machineName) {
+            const fileSystemExt: FileSystemExtImpl= (webSocketClient.rpc as any).locals.get(MAIN_RPC_CONTEXT.COMMAND_REGISTRY_EXT.id);
+            fileSystemExt.registerFileSystemProvider(`file-sidecar-${machineName}`, new SidecarFilesystemProvider());
+        }
 
         return webSocketClient;
     }
@@ -484,6 +496,11 @@ class PluginDeployerHandlerImpl implements PluginDeployerHandler {
             const { type } = entry;
             const deployed: DeployedPlugin = { metadata, type };
             deployed.contributes = this.reader.readContribution(manifest);
+            if (deployed && deployed.contributes && deployed.contributes.snippets) {
+                deployed.contributes.snippets.forEach(snippet => {
+                    snippet.uri = overrideUri(URI.parse(snippet.uri)).toString();
+                });
+            }
             this.deployedBackendPlugins.set(metadata.model.id, deployed);
             currentBackendDeployedPlugins.push(deployed);
             this.logger.info(`Deploying ${entryPoint} plugin "${metadata.model.name}@${metadata.model.version}" from "${metadata.model.entryPoint[entryPoint] || pluginPath}"`);
