@@ -219,7 +219,7 @@ $ yarn theia start /projects/theia-projects-dir --hostname=0.0.0.0 --port=3010
 
 # Working with Plugins in Sidecars
 
-In a real Che workspace, many plugins are run in their own "sidecar" container. The idea is that the container furnishes any "native" dependencies the the plugins needs. For example the container that runs the theia IDE back end does not contain a Java SDK, so in order to run a plugin that needs a Java installation, we'll run the plugin inside a container that has Java installed.
+In a real Che workspace, many plugins are run in their own "sidecar" container. The idea is that the container furnishes any "native" dependencies the plugin needs. For example the container that runs the theia IDE back end does not contain a Java SDK, so in order to run a plugin that needs a Java installation, we'll run the plugin inside a container that has Java installed.
 
 As when working on developing Che-Theia itself, the approach is to run a copy of the Theia back end on a different port than that we use for the self hosting workspace. 
 
@@ -242,7 +242,7 @@ So, starting with a workspace to develop che-theia, we'll have to add a containe
         name: JAVA_HOME
 ```
 
-  Notice the two environment variables we added: `THEIA_PLUGIN_ENDPOINT_DISCOVERY_PORT`and `THEIA_PLUGINS`. The will be used to tell the plugin host process we will run in the container where to announce it's presence and where to pick up the plugins it should run.
+  Notice the two environment variables we added: `THEIA_PLUGIN_ENDPOINT_DISCOVERY_PORT`and `THEIA_PLUGINS`. The will be used to tell the plugin host process we will run in the container where to announce it's presence and where to pick up the plugins it should run. Note that if you want to make the development process more realistic, you can point the THEIA_PLUGINS variable to some non-shared location, as would be the case in a real Che workspace. Anything in `/tmp` would serve.
 
 We'll also have to add the discovery endpoint setting to the container running the theia backend:
 
@@ -280,7 +280,7 @@ Note that some earlier versions of the plugin did not work in a self-hosting set
 
 ## Setting up plugins to run
 
-We can now add plugins to run in the sidecar container by adding them to the folder `/projects/plugins-1`(or whaterver we define as `THEIA_PLUGINS`env variable). If we're just interested in debugging the theia plugins host process, we can download a *.vsix file to the folder: it will be unpacked to a subfolder of `/tmp`. If we need to debug the plugin, we can checkout the source code and built it according the the instructions for the plugin:
+We can now add plugins to run in the sidecar container by adding them to the folder `/projects/plugins-1`(or whaterver we define as `THEIA_PLUGINS`env variable). If we're just interested in debugging the theia plugins host process, we can download a *.vsix file to the folder: it will be unpacked to a subfolder of `/tmp`. If we need to debug the plugin, we can checkout the source code and build it according the the instructions for the plugin:
 
 ```bash
 $ cd /projects/plugins-1/
@@ -305,9 +305,9 @@ Now we can run the IDE:
 
 4. Open a terminal for the `theia-dev`container
 
-5. `cd /projects/theia/assembly`
+5. `cd /projects/theia/examples/assembly`
 
-6. `yarn run start`
+6. `yarn run start --hostname=0.0.0.0 --port=3010 --plugins=local-dir:/projects/theia/plugins`
    The theia back end should start up as normal
 
 7. Now click on `theia-dev-flow`in the "My Workspace" sidebar panel
@@ -326,7 +326,7 @@ The node process will wait upon startup until we connect the debugger using an `
     {
         "type": "node",
         "request": "attach",
-        "name": "Java",
+        "name": "VSCode Java Extension",
         "port": 8888,
         "sourceMaps": true
     }
@@ -335,4 +335,3 @@ The node process will wait upon startup until we connect the debugger using an `
 ```
 
 Once the debugger has attached, the process will be suspended and you'll have to `continue`in order to complete the startup. You should now be able to put breakpoints in any source in the plugin host or target plugin source. 
-
