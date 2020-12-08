@@ -10,12 +10,13 @@
 
 import * as path from 'path';
 
+import { CheTheiaPluginScanner, CheVsCodePluginScanner } from './che-plugin-scanner';
 import { ContainerModule, interfaces } from 'inversify';
 import {
   HostedPluginProcess,
   HostedPluginProcessConfiguration,
 } from '@theia/plugin-ext/lib/hosted/node/hosted-plugin-process';
-import { MetadataProcessor, ServerPluginRunner } from '@theia/plugin-ext/lib/common';
+import { MetadataProcessor, PluginScanner, ServerPluginRunner } from '@theia/plugin-ext/lib/common';
 
 import { ConnectionContainerModule } from '@theia/core/lib/node/messaging/connection-container-module';
 import { HostedPluginMapping } from './plugin-remote-mapping';
@@ -46,4 +47,7 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
   rebind(HostedPluginProcessConfiguration).toConstantValue({ path: path.resolve(__dirname, 'plugin-host-custom.js') });
   bind(ConnectionContainerModule).toConstantValue(localModule);
+  unbind(PluginScanner);
+  bind(PluginScanner).to(CheTheiaPluginScanner).inSingletonScope();
+  bind(PluginScanner).to(CheVsCodePluginScanner).inSingletonScope();
 });
