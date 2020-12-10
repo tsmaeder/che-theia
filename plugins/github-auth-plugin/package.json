@@ -17,7 +17,7 @@
     "uuid": "^3.1.0"
   },
   "devDependencies": {
-    "@theia/plugin": "next",
+    "@theia/plugin": "^1.8.0",
     "@theia/plugin-packager": "latest",
     "@eclipse-che/plugin": "0.0.1"
   },
@@ -33,7 +33,7 @@
     "watch": "tsc -w"
   },
   "engines": {
-    "theiaPlugin": "next"
+    "theiaPlugin": "^1.8.0"
   },
   "theiaPlugin": {
     "backend": "lib/github-auth-plugin.js"
