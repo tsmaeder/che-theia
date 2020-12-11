@@ -12,8 +12,8 @@
  * Share the definition of plugin resource uris between back end and
  * front end.
  */
-export namespace PluginUri {
-  export const SCHEME = 'pluginresource';
+export namespace ChePluginUri {
+  export const SCHEME = 'chepluginresource';
 
   export function createUri(pluginId: string, relativePath: string) {
     return `${SCHEME}://${pluginId}/${relativePath}`;

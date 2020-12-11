@@ -9,8 +9,8 @@
  ***********************************************************************/
 import { MaybePromise, Resource, ResourceReadOptions, ResourceResolver } from '@theia/core/lib/common';
 
+import { ChePluginUri } from '../common/che-plugin-uri';
 import { Endpoint } from '@theia/core/lib/browser';
-import { PluginUri } from '../common/plugin-uri';
 import URI from '@theia/core/lib/common/uri';
 import { injectable } from 'inversify';
 
@@ -20,11 +20,11 @@ import { injectable } from 'inversify';
  * The path is resolve relative to the directory designated by the
  * plugins package path.
  */
-export class PluginResource implements Resource {
+export class ChePluginResource implements Resource {
   readonly uri: URI;
 
   constructor(pluginId: string, relativePath: string) {
-    this.uri = PluginResource.getUri(pluginId, relativePath);
+    this.uri = ChePluginResource.getUri(pluginId, relativePath);
   }
 
   private static getUri(pluginId: string, relativePath: string): URI {
@@ -56,11 +56,11 @@ export class PluginResource implements Resource {
 }
 
 @injectable()
-export class PluginResourceResolver implements ResourceResolver {
+export class ChePluginResourceResolver implements ResourceResolver {
   resolve(uri: URI): MaybePromise<Resource> {
-    if (uri.scheme !== PluginUri.SCHEME) {
-      throw new Error('Not a plugin resource');
+    if (uri.scheme !== ChePluginUri.SCHEME) {
+      throw new Error('Not a plugin resource: ' + uri.toString());
     }
-    return new PluginResource(uri.authority, uri.path.toString().substring(1));
+    return new ChePluginResource(uri.authority, uri.path.toString().substring(1));
   }
 }

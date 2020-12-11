@@ -12,7 +12,7 @@ import * as path from 'path';
 
 import { PluginPackage, SnippetContribution, getPluginId } from '@theia/plugin-ext/lib/common';
 
-import { PluginUri } from '../common/plugin-uri';
+import { ChePluginUri } from '../common/che-plugin-uri';
 import { TheiaPluginScanner } from '@theia/plugin-ext/lib/hosted/node/scanners/scanner-theia';
 import { VsCodePluginScanner } from '@theia/plugin-ext-vscode/lib/node/scanner-vscode';
 
@@ -45,7 +45,7 @@ function readSnippets(pck: PluginPackage): SnippetContribution[] | undefined {
       result.push({
         language: contribution.language,
         source: pck.displayName || pck.name,
-        uri: PluginUri.createUri(getPluginId(pck), relativePath),
+        uri: ChePluginUri.createUri(getPluginId(pck), relativePath),
       });
     }
   }
