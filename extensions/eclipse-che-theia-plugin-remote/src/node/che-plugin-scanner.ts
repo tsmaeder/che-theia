@@ -10,9 +10,9 @@
 
 import * as path from 'path';
 
-import { PluginPackage, SnippetContribution, getPluginId } from '@theia/plugin-ext/lib/common';
+import { PluginPackage, SnippetContribution } from '@theia/plugin-ext/lib/common';
 
-import { ChePluginUri } from '../common/che-plugin-uri';
+import { FileUri } from '@theia/core/lib/node/file-uri';
 import { TheiaPluginScanner } from '@theia/plugin-ext/lib/hosted/node/scanners/scanner-theia';
 import { VsCodePluginScanner } from '@theia/plugin-ext-vscode/lib/node/scanner-vscode';
 
@@ -39,13 +39,16 @@ function readSnippets(pck: PluginPackage): SnippetContribution[] | undefined {
   const result: SnippetContribution[] = [];
   for (const contribution of pck.contributes.snippets) {
     if (contribution.path) {
-      const absolutePath = path.join(pck.packagePath, contribution.path);
-      const normalizedPath = path.normalize(absolutePath);
-      const relativePath = path.relative(pck.packagePath, normalizedPath);
+      let uri = FileUri.create(path.join(pck.packagePath, contribution.path));
+      const machineName = process.env.CHE_MACHINE_NAME;
+      if (machineName) {
+        uri = uri.withScheme(`file-sidecar-${machineName}`);
+      }
+
       result.push({
         language: contribution.language,
         source: pck.displayName || pck.name,
-        uri: ChePluginUri.createUri(getPluginId(pck), relativePath),
+        uri: uri.toString(),
       });
     }
   }
