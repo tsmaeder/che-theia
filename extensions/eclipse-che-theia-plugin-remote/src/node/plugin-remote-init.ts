@@ -227,12 +227,12 @@ to pick-up automatically a free port`)
   // create a new client on top of socket
   newClient(id: number, socket: ws): WebSocketClient {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const emitter = new Emitter<any>();
+    const emitter = new Emitter<string>();
     const webSocketClient = new WebSocketClient(id, socket, emitter);
     webSocketClient.rpc = new RPCProtocolImpl({
       onMessage: emitter.event,
       // send messages to this client
-      send: (m: {}) => {
+      send: (m: string) => {
         webSocketClient.send(m);
       },
     });
@@ -305,73 +305,76 @@ to pick-up automatically a free port`)
     });
 
     socket.on('message', async (data: ws.Data) => {
-      const jsonParsed = JSON.parse(data.toString());
+      const message = data.toString();
+      if (message && message.length > 0) {
+        const jsonParsed = JSON.parse(message);
 
-      // handle local call
-      if (jsonParsed.internal) {
-        // asked to stop plug-ins
-        if (jsonParsed.internal.method && jsonParsed.internal.method === 'stop') {
-          try {
-            // wait to stop plug-ins
-            // FIXME: we need to fix this
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (<any>client.pluginHostRPC).pluginManager.$stop();
+        // handle local call
+        if (jsonParsed.internal) {
+          // asked to stop plug-ins
+          if (jsonParsed.internal.method && jsonParsed.internal.method === 'stop') {
+            try {
+              // wait to stop plug-ins
+              // FIXME: we need to fix this
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              await (<any>client.pluginHostRPC).pluginManager.$stop();
 
-            // ok now we can dispose the emitter
-            client.disposeEmitter();
-          } catch (e) {
-            console.error(e);
-          }
-          return;
-        }
-
-        // asked to send plugin resource
-        if (jsonParsed.internal.method === 'getResource') {
-          const pluginId: string = jsonParsed.internal['pluginId'];
-          const resourcePath: string = jsonParsed.internal['path'];
-
-          const pluginRootDirectory = this.pluginReaderExtension.getPluginRootDirectory(pluginId);
-          const resourceFilePath = path.join(pluginRootDirectory!, resourcePath);
-
-          let resourceBase64: string | undefined;
-          if (fs.existsSync(resourceFilePath)) {
-            const resourceBinary = fs.readFileSync(resourceFilePath);
-            resourceBase64 = resourceBinary.toString('base64');
+              // ok now we can dispose the emitter
+              client.disposeEmitter();
+            } catch (e) {
+              console.error(e);
+            }
+            return;
           }
 
-          client.send({
-            internal: {
-              method: 'getResource',
-              pluginId: pluginId,
-              path: resourcePath,
-              data: resourceBase64,
-            },
-          });
+          // asked to send plugin resource
+          if (jsonParsed.internal.method === 'getResource') {
+            const pluginId: string = jsonParsed.internal['pluginId'];
+            const resourcePath: string = jsonParsed.internal['path'];
 
-          return;
-        }
+            const pluginRootDirectory = this.pluginReaderExtension.getPluginRootDirectory(pluginId);
+            const resourceFilePath = path.join(pluginRootDirectory!, resourcePath);
 
-        // asked to grab metadata, send them
-        if (jsonParsed.internal.metadata && 'request' === jsonParsed.internal.metadata) {
-          // apply host on all local metadata
-          currentBackendDeployedPlugins.forEach(
-            deployedPlugin => (deployedPlugin.metadata.host = jsonParsed.internal.endpointName)
-          );
-          const metadataResult = {
-            internal: {
-              endpointName: jsonParsed.internal.endpointName,
-              metadata: {
-                result: currentBackendDeployedPlugins,
+            let resourceBase64: string | undefined;
+            if (fs.existsSync(resourceFilePath)) {
+              const resourceBinary = fs.readFileSync(resourceFilePath);
+              resourceBase64 = resourceBinary.toString('base64');
+            }
+
+            client.send({
+              internal: {
+                method: 'getResource',
+                pluginId: pluginId,
+                path: resourcePath,
+                data: resourceBase64,
               },
-            },
-          };
-          client.send(metadataResult);
-        }
-        return;
-      }
+            });
 
-      // send what is inside the message (wrapped message)
-      client.fire(jsonParsed);
+            return;
+          }
+
+          // asked to grab metadata, send them
+          if (jsonParsed.internal.metadata && 'request' === jsonParsed.internal.metadata) {
+            // apply host on all local metadata
+            currentBackendDeployedPlugins.forEach(
+              deployedPlugin => (deployedPlugin.metadata.host = jsonParsed.internal.endpointName)
+            );
+            const metadataResult = {
+              internal: {
+                endpointName: jsonParsed.internal.endpointName,
+                metadata: {
+                  result: currentBackendDeployedPlugins,
+                },
+              },
+            };
+            client.send(metadataResult);
+          }
+          return;
+        }
+
+        // send what is inside the message (wrapped message)
+        client.fire(jsonParsed);
+      }
     });
   }
 }
