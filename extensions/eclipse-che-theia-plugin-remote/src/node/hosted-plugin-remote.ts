@@ -136,7 +136,7 @@ export class HostedPluginRemote {
    * @param jsonMessage the given message
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onMessage(pluginHostId: string, jsonMessage: any): void {
+  onMessage(pluginHostId: string, jsonMessage: string): void {
     // do the routing depending on the plugin's endpoint
 
     const websocket = this.endpointsSockets.get(pluginHostId);
@@ -145,7 +145,7 @@ export class HostedPluginRemote {
       this.logger.error('no websocket configured for the given plugin host', pluginHostId, 'skipping message');
       return;
     }
-    websocket.send(jsonMessage.content);
+    websocket.send(jsonMessage);
   }
 
   /**

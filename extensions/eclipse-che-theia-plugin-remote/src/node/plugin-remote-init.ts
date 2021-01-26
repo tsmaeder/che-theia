@@ -341,14 +341,16 @@ to pick-up automatically a free port`)
               resourceBase64 = resourceBinary.toString('base64');
             }
 
-            client.send({
-              internal: {
-                method: 'getResource',
-                pluginId: pluginId,
-                path: resourcePath,
-                data: resourceBase64,
-              },
-            });
+            client.send(
+              JSON.stringify({
+                internal: {
+                  method: 'getResource',
+                  pluginId: pluginId,
+                  path: resourcePath,
+                  data: resourceBase64,
+                },
+              })
+            );
 
             return;
           }
@@ -367,13 +369,12 @@ to pick-up automatically a free port`)
                 },
               },
             };
-            client.send(metadataResult);
+            client.send(JSON.stringify(metadataResult));
           }
           return;
         }
 
-        // send what is inside the message (wrapped message)
-        client.fire(jsonParsed);
+        client.fire(message);
       }
     });
   }
@@ -388,7 +389,7 @@ export class WebSocketClient {
   public pluginHostRPC: PluginHostRPC;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(private readonly id: number, private socket: ws, private readonly emitter: Emitter<any>) {}
+  constructor(private readonly id: number, private socket: ws, private readonly emitter: Emitter<string>) {}
 
   public getIdentifier(): number {
     return this.id;
@@ -396,9 +397,9 @@ export class WebSocketClient {
 
   // message is a JSON entry
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  send(message: any): void {
+  send(message: string): void {
     try {
-      this.socket.send(JSON.stringify(message));
+      this.socket.send(message);
     } catch (error) {
       console.log('error socket while sending', error, message);
     }
@@ -409,7 +410,7 @@ export class WebSocketClient {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  fire(message: any): void {
+  fire(message: string): void {
     try {
       this.emitter.fire(message);
     } catch (error) {
