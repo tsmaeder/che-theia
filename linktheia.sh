@@ -6,15 +6,15 @@ for r in packages dev-packages examples; do
         directory=$THEIA_LOCATION/$r/$d
         echo linking $directory 
         cd $directory
-        yarn link 
+        yarn link --link-folder /projects/links
     done
 done
 
 cd $BASEDIR
 echo basedir is $BASEDIR
 
-for m in ~/.config/yarn/link/@theia/*/; do
+for m in /projects/links/@theia/*/; do
     toLink=@theia/`basename $m`
     echo linking $toLink
-    yarn link $toLink
+    yarn link --link-folder /projects/links $toLink
 done

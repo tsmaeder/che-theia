@@ -47,10 +47,10 @@
   },
   "workspaces": {
     "packages": [
-      "extensions/*",
-      "plugins/*",
       "generator",
       "tools/automation",
+      "extensions/*",
+      "plugins/*",
       "assembly"
     ]
   },
