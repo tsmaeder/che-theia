@@ -33,7 +33,7 @@
     }
   },
   "devDependencies": {
-    "@theia/plugin": "^1.8.0",
+    "@theia/plugin": "next",
     "@theia/plugin-packager": "latest",
     "@eclipse-che/plugin": "0.0.1"
   },
@@ -50,7 +50,7 @@
     "watch": "tsc -w"
   },
   "engines": {
-    "theiaPlugin": "^1.8.0"
+    "theiaPlugin": "next"
   },
   "theiaPlugin": {
     "backend": "lib/containers-plugin.js"

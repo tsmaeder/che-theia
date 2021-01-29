@@ -10,7 +10,7 @@
   ],
   "dependencies": {
     "@eclipse-che/api": "latest",
-    "@theia/workspace": "^1.8.0",
+    "@theia/workspace": "next",
     "@eclipse-che/theia-remote-api": "^0.0.1",
     "js-yaml": "3.13.1"
   },

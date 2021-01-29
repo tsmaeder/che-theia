@@ -9,7 +9,7 @@
     "src"
   ],
   "dependencies": {
-    "@theia/core": "^1.8.0",
+    "@theia/core": "next",
     "@eclipse-che/theia-remote-api": "^0.0.1"
   },
   "scripts": {

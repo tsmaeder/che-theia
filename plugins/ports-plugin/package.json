@@ -108,7 +108,7 @@
   "dependencies": {},
   "devDependencies": {
     "@eclipse-che/plugin": "latest",
-    "@theia/plugin": "^1.8.0",
+    "@theia/plugin": "next",
     "@theia/plugin-packager": "latest"
   },
   "scripts": {
@@ -125,7 +125,7 @@
     "test-watch": "jest --watchAll"
   },
   "engines": {
-    "theiaPlugin": "^1.8.0"
+    "theiaPlugin": "next"
   },
   "theiaPlugin": {
     "backend": "lib/main.js"

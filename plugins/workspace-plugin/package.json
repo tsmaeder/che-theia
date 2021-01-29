@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@eclipse-che/plugin": "0.0.1",
-    "@theia/plugin": "^1.8.0",
+    "@theia/plugin": "next",
     "@theia/plugin-packager": "latest"
   },
   "scripts": {
@@ -31,7 +31,7 @@
     "test:watch": "jest --watchAll"
   },
   "engines": {
-    "theiaPlugin": "^1.8.0"
+    "theiaPlugin": "next"
   },
   "theiaPlugin": {
     "backend": "lib/workspace-plugin.js"
